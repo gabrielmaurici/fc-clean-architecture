@@ -2,7 +2,7 @@ import ProductFactory from "../../../domain/product/factory/product.factory";
 import ListProductUseCase from "./list.product.usecase";
 
 const productA = ProductFactory.create("a", "Macbook Pro M3 Pro", 13000);
-const productB = ProductFactory.create("b", "Iphone 15 Pro Max", 10000);
+const productB = ProductFactory.create("b", "Iphone 15 Pro Max", 8000);
 
 const MockRepository = () => {
   return {
