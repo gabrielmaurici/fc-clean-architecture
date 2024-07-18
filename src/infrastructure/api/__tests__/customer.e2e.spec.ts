@@ -1,3 +1,4 @@
+import { OutputFindCustomerDto } from "../../../usecase/customer/find/find.customer.dto";
 import { app, sequelize } from "../express";
 import request from "supertest";
 
@@ -95,8 +96,85 @@ describe("E2E test for customer", () => {
     expect(listResponseXML.text).toContain(`<name>Jane</name>`);
     expect(listResponseXML.text).toContain(`<street>Street 2</street>`);
     expect(listResponseXML.text).toContain(`</customers>`);
-    
+  });
 
+  it("should find a customer", async () => {
+    const response = await request(app)
+      .post("/customer")
+      .send({
+        name: "John",
+        address: {
+          street: "Street",
+          city: "City",
+          number: 123,
+          zip: "12345",
+        },
+      });
+    expect(response.status).toBe(200);
     
+    const id = response.body.id;
+
+    const findResponse = await request(app).get(`/customer/${id}`).send();
+
+    expect(findResponse.status).toBe(200);
+    const customer: OutputFindCustomerDto = findResponse.body;
+    expect(customer.id).toBe(id);
+    expect(customer.name).toBe("John");
+    expect(customer.address.street).toBe("Street");
+    expect(customer.address.city).toBe("City");
+    expect(customer.address.number).toBe(123);
+    expect(customer.address.zip).toBe("12345");
+
+    const findResponseXML = await request(app)
+    .get(`/customer/${id}`)
+    .set("Accept", "application/xml")
+    .send();
+
+    expect(findResponseXML.status).toBe(200);
+    expect(findResponseXML.text).toContain(`<?xml version="1.0" encoding="UTF-8"?>`);
+    expect(findResponseXML.text).toContain(`<name>John</name>`);
+    expect(findResponseXML.text).toContain(`<address>`);
+    expect(findResponseXML.text).toContain(`<street>Street</street>`);
+    expect(findResponseXML.text).toContain(`<city>City</city>`);
+    expect(findResponseXML.text).toContain(`<number>123</number>`);
+    expect(findResponseXML.text).toContain(`<zip>12345</zip>`);
+  });
+  
+  it("should update a customer", async () => {
+    const responseCreate = await request(app)
+      .post("/customer")
+      .send({
+        name: "John",
+        address: {
+          street: "Street",
+          city: "City",
+          number: 123,
+          zip: "12345",
+        },
+      });
+
+    expect(responseCreate.status).toBe(200);
+    
+    const id = responseCreate.body.id;
+    const responseUpdate = await request(app)
+      .put("/customer")
+      .send({
+        id: id,
+        name: "John",
+        address: {
+          street: "Street Update",
+          city: "City Update",
+          number: 123,
+          zip: "12345",
+        },
+      });
+
+    expect(responseUpdate.statusCode).toBe(200);
+    expect(responseUpdate.body.id).toBe(id);
+    expect(responseUpdate.body.name).toBe("John");
+    expect(responseUpdate.body.address.street).toBe("Street Update");
+    expect(responseUpdate.body.address.city).toBe("City Update");
+    expect(responseUpdate.body.address.number).toBe(123);
+    expect(responseUpdate.body.address.zip).toBe("12345");
   });
 });

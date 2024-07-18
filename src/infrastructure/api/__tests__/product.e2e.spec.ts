@@ -1,3 +1,5 @@
+import { OutputFindProductDto } from "../../../usecase/product/find/find.product.dto";
+import { OutputUpdateProductDto } from "../../../usecase/product/update/update.product.dto";
 import { app, sequelize } from "../express";
 import request from "supertest";
 
@@ -77,5 +79,84 @@ describe("E2E test for product", () => {
     expect(listResponseXML.text).toContain(`<price>8000</price>`);
     expect(listResponseXML.text).toContain(`</product>`);
     expect(listResponseXML.text).toContain(`</products>`);
+  });
+
+  it("should find a product", async () => {
+    const response = await request(app)
+      .post("/product")
+      .send({
+        type: "a",
+        name: "Macbook Pro M3 Pro",
+        price: 13000
+      });
+    expect(response.status).toBe(200);
+    
+    const id = response.body.id;
+    const findResponse = await request(app).get(`/product/${id}`).send();
+
+    expect(findResponse.status).toBe(200);
+    const product: OutputFindProductDto = findResponse.body;
+    expect(product.id).toBe(id);
+    expect(product.name).toBe("Macbook Pro M3 Pro");
+    expect(product.price).toBe(13000);
+
+    const findResponseXML = await request(app)
+    .get("/product")
+    .set("Accept", "application/xml")
+    .send();
+
+    expect(findResponseXML.status).toBe(200);
+    expect(findResponseXML.text).toContain(`<?xml version="1.0" encoding="UTF-8"?>`);
+    expect(findResponseXML.text).toContain(`<id>${id}</id>`);
+    expect(findResponseXML.text).toContain(`<name>Macbook Pro M3 Pro</name>`);
+    expect(findResponseXML.text).toContain(`<price>13000</price>`);
+  });
+
+  it("should update a product", async () => {
+    const responseCreate = await request(app)
+      .post("/product")
+      .send({
+        type: "a",
+        name: "Macbook Pro M3 Pro",
+        price: 13000
+      });
+
+    expect(responseCreate.status).toBe(200);
+    
+    const id = responseCreate.body.id;
+    const responseUpdate = await request(app)
+      .put("/product")
+      .send({
+        id: id,
+        name: "Macbook Air",
+        price: 8000
+      });
+
+    expect(responseUpdate.statusCode).toBe(200);
+    const product: OutputUpdateProductDto = responseUpdate.body;
+    expect(product.id).toBe(id);
+    expect(product.name).toBe("Macbook Air");
+    expect(product.price).toBe(8000);
+  });
+
+  it("should not update a product", async () => {
+    const responseCreate = await request(app)
+      .post("/product")
+      .send({
+        type: "a",
+        name: "Macbook Pro M3 Pro",
+        price: 13000
+      });
+
+    expect(responseCreate.status).toBe(200);
+    
+    const responseUpdate = await request(app)
+      .put("/product")
+      .send({
+        name: "Macbook Air",
+        price: 8000
+      });
+
+    expect(responseUpdate.statusCode).toBe(500);
   });
 });

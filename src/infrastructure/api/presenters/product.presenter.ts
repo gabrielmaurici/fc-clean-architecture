@@ -1,5 +1,6 @@
 import { toXML } from "jstoxml";
 import { OutputListProductDto } from "../../../usecase/product/list/list.product.dto";
+import { OutputFindProductDto } from "../../../usecase/product/find/find.product.dto";
 
 export default class ProductPresenter {
   static listXML(data: OutputListProductDto): string {
@@ -19,6 +20,24 @@ export default class ProductPresenter {
             price: product.price
           })),
         },
+      },
+      xmlOption
+    );
+  }
+
+  static findXML(data: OutputFindProductDto): string {
+    const xmlOption = {
+      header: true,
+      indent: "  ",
+      newline: "\n",
+      allowEmpty: true,
+    };
+
+    return toXML(
+      {
+        id: data.id,
+        name: data.name,
+        price: data.price
       },
       xmlOption
     );
